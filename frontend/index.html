@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multiplayer Chess</title>
+
+  <!-- Chessboard.js styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+
+  <!-- Your custom styles -->
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Join Screen Overlay -->
+  <div id="joinScreen">
+    <h2>Join the Game</h2>
+    <button id="whiteBtn" data-role="white" onclick="joinAs('white')">Play as White</button>
+    <button id="blackBtn" data-role="black" onclick="joinAs('black')">Play as Black</button>
+    <button id="spectatorBtn" data-role="spectator" onclick="joinAs('spectator')">Spectate</button>
+  </div>
+
+  <!-- Game Info -->
+  <div id="roleBox">You are: Spectator</div>
+  <div id="turnIndicator">White's turn</div>
+
+  <!-- Chessboard Container -->
+  <div id="board"></div>
+
+  <!-- End Game Banner Overlay -->
+  <div id="endBanner" style="display:none;" class="banner-overlay">
+    <div></div>
+      <div id="endMessage"></div>
+      <button id="playAgainBtn" class="play-again-button">Play Again</button>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <button id="aiBtn">Get AI Suggestion</button>
+    <button id="resetBtn">Reset Game</button>
+    <div id="suggestionBox"></div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+
+  <!-- Your game logic -->
+  <script src="/script.js"></script>
+</body>
+</html>
