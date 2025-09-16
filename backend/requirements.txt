@@ -1,0 +1,4 @@
+flask
+python-chess
+flask_socketio
+eventlet
