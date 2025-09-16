@@ -1,0 +1,12 @@
+version: '3'
+services:
+  chess-backend:
+    build: .
+    ports:
+     - "5000:5000"
+    networks:
+     - chessnet
+
+networks:
+  chessnet:
+    driver: bridge
