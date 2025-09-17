@@ -66,10 +66,10 @@ io.on('connection', socket => {
     io.emit('game_state', game.fen());
   });
 
-  socket.on('move', ({ from, to }) => {
-    const m = game.move({ from, to });
+  socket.on('move', (moveObj) => {
+    const m = game.move(moveObj);
     if (!m) {
-      return socket.emit('invalid_move', { from, to });
+      return socket.emit('invalid_move', { from: moveObj.from, to: moveObj.to });
     }
     io.emit('game_state', game.fen());
   });

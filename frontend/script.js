@@ -10,7 +10,7 @@ const winnerMessages = [
 ]
 
 const loserMessages = [
-  "Defeat is but a stepping stone to greatness. Learn and rise again!"
+  "Defeat is but a stepping stone to greatness. Learn and rise again!",
 ]
 
 const playAgainLabels = [
@@ -52,7 +52,18 @@ function handleMove(source, target) {
 
   // Simulate the move
   const tempGame = new Chess(game.fen());
-  const result = tempGame.move({ from: source, to: target });
+  const piece = game.get(source);
+  const isPawn = piece && piece.type === 'p';
+  const isPromotionRank = (piece.color === 'w' && target[1] === '8') ||
+                          (piece.color === 'b' && target[1] === '1');
+
+  const moveObj = {
+    from: source,
+    to: target,
+    promotion: isPawn && isPromotionRank ? 'q' : undefined // promote to queen
+  };
+  // const result = tempGame.move({ from: source, to: target });
+  const result = tempGame.move(moveObj);
 
   if (!result) return 'snapback';
 
@@ -66,7 +77,8 @@ function handleMove(source, target) {
   }
 
   // Move is legal — emit and clean up
-socket.emit("move", { from: source, to: target });
+  socket.emit("move", moveObj);
+// socket.emit("move", { from: source, to: target });
   document.querySelectorAll(".suggestion-arrow").forEach(el => el.remove());
   document.querySelectorAll(".highlight-square").forEach(el => el.classList.remove("highlight-square"));
 }
