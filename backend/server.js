@@ -3,6 +3,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const { Chess } = require('chess.js');
+const bodyParser = require('body-parser');
+const {getBestMove} = require('./stockfish');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,16 +15,29 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/ai', (req, res) => {
-  const legalMoves = game.moves( {verbose: true} );
-  if(legalMoves.length === 0) {
+app.use(bodyParser.json());
+
+app.post('/ai', async (req, res) => {
+  const { fen } = req.body;
+  if (!fen) return res.status(400).json({ error: 'Missing FEN' });
+
+  // build a fresh game from the exact client position
+  const game = new Chess(fen);
+  const legalMoves = game.moves({ verbose: true });
+  if (legalMoves.length === 0) {
     return res.json({ move: null });
   }
-    // Pick a random legal move
-  const move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-  const { from, to } = move;
-  console.log("AI suggestion (server):", from, "->", to);
-  res.json({ move: from + to });
+
+  try {
+    const bestMove = await getBestMove(fen);
+    console.log("AI suggestion (Stockfish):", bestMove);
+    res.json({ move: bestMove });
+  } catch (err) {
+    console.error("Stockfish error:", err);
+    // fallback
+    const m = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    res.json({ move: m.from + m.to });
+  }
 });
 
 // serve frontend

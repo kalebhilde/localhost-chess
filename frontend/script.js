@@ -23,7 +23,6 @@ const playAgainLabels = [
 
 // Initialize board and UI
 window.onload = function () {
-  // const savedRole = localStorage.getItem("chessRole");
   document.getElementById("joinScreen").style.display = "flex";
   document.getElementById("aiBtn").addEventListener("click", getAISuggestion);
   document.getElementById("resetBtn").addEventListener("click", resetGame);
@@ -43,7 +42,6 @@ function joinAs(selectedRole) {
 
 // Handle piece drop
 function handleMove(source, target) {
-
   if (role === "spectator") return 'snapback';
 
   const movingSide = game.turn(); // 'w' or 'b'
@@ -74,22 +72,8 @@ socket.emit("move", { from: source, to: target });
 }
 
 // Socket events
-// socket.on('available_roles', roles => {
-//   ['white','black','spectator'].forEach(r => {
-//     document.querySelector(`button[data-role="${r}"]`).disabled = !roles.includes(r);
-//   });
-// });
 
 socket.on("role", r => {
-  // role = r;
-  // document.getElementById('roleBox').textContent = `You are: ${r}`;
-
-  // if (r === 'spectator') {
-  //   document.getElementById('joinScreen').style.display = 'flex';
-  //   document.querySelectorAll('#joinScreen button').forEach(b => b.disabled = false);
-  // } else {
-  //   document.getElementById('joinScreen').style.display = 'none';
-  // }
   if (!r) {
     document.getElementById("suggestionBox").textContent = "Role already taken. Please choose another.";
     document.querySelectorAll("#joinScreen button").forEach(b => b.disabled = false);
@@ -166,8 +150,6 @@ socket.on("available_roles", roles => {
       btn.disabled = !roles.includes(role);
     }
   });
-console.log("Available roles updated:", roles);
-
   // If join screen is visible, clear any rejection messages
   if (document.getElementById("joinScreen").style.display !== "none") {
     document.getElementById("suggestionBox").textContent = "";
@@ -206,25 +188,28 @@ function resetGame() {
   }
 }
 
-// AI suggestion fetch
-function getAISuggestion() {
+// Request AI move suggestion
+async function getAISuggestion() {
   if (role === "spectator") {
-    document.getElementById("suggestionBox").textContent = "Spectators can't request AI suggestions.";
-    return; 
+    suggestionBox.textContent = "Spectators can't request AI suggestions.";
+    return;
   }
-  console.log("AI suggestion clicked by non-spectator");
-  fetch('/ai')
-    .then(response => response.json())
-    .then(data => {
-      if (!data.move) return;
-      const from = data.move.slice(0, 2);
-      const to = data.move.slice(2, 4);
-      setTimeout(() => {
-        drawSuggestionArrow(from, to);
-      }, 50);
-      document.getElementById("suggestionBox").textContent = `Suggested move: ${from} → ${to}`;
-    })
-    .catch(err => console.error("Error fetching AI move:", err));
+
+  const fen = game.fen();
+  const res = await fetch('/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fen }),
+  });
+
+  const { move } = await res.json();
+  if (!move) return;
+
+  const from = move.slice(0, 2);
+  const to   = move.slice(2, 4);
+
+  drawSuggestionArrow(from, to);
+  suggestionBox.textContent = `Suggested move: ${from} → ${to}`;
 }
 
 // Update turn indicator
@@ -274,7 +259,6 @@ function drawSuggestionArrow(from, to) {
       </marker>
     </defs>
   `;
-
 
   // Create the arrow line
   const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
