@@ -25,28 +25,21 @@ const playAgainLabels = [
 window.onload = function () {
   // const savedRole = localStorage.getItem("chessRole");
   document.getElementById("joinScreen").style.display = "flex";
-
   document.getElementById("aiBtn").addEventListener("click", getAISuggestion);
   document.getElementById("resetBtn").addEventListener("click", resetGame);
-
   document.getElementById("playAgainBtn").addEventListener("click", () => {
-  document.getElementById("endBanner").style.display = "none";
-  resetGame();
+    document.getElementById("endBanner").style.display = "none";
+    resetGame();
   });
 };
 
-
-// Called when user selects a role
 function joinAs(selectedRole) {
-  const btn = document.querySelector(`button[data-role="${selectedRole}"]`);
-  if (btn.disabled) return;
-
-  // document.getElementById("joinScreen").style.display = "none";
-
-  document.querySelectorAll("#joinScreen button").forEach(b => b.disabled = true);
-
-  socket.emit("join", { role: selectedRole });
+  if (document.querySelector(`button[data-role="${selectedRole}"]`).disabled) return;
+  document.querySelectorAll('#joinScreen button').forEach(b => b.disabled = true);
+  socket.emit('join', { role: selectedRole });
 }
+
+// update available-role buttons
 
 // Handle piece drop
 function handleMove(source, target) {
@@ -81,17 +74,32 @@ socket.emit("move", { from: source, to: target });
 }
 
 // Socket events
-socket.on("role", r => {
-    if (!r) {
-      document.getElementById("suggestionBox").textContent = "Role already taken. Please choose another.";
-      document.querySelectorAll("#joinScreen button").forEach(b => b.disabled = false);
-      return;
-    }
+// socket.on('available_roles', roles => {
+//   ['white','black','spectator'].forEach(r => {
+//     document.querySelector(`button[data-role="${r}"]`).disabled = !roles.includes(r);
+//   });
+// });
 
-    role = r;
-    document.getElementById("suggestionBox").textContent = "";
-    document.getElementById("roleBox").textContent = `You are: ${role}`;
-    document.getElementById("joinScreen").style.display = "none";
+socket.on("role", r => {
+  // role = r;
+  // document.getElementById('roleBox').textContent = `You are: ${r}`;
+
+  // if (r === 'spectator') {
+  //   document.getElementById('joinScreen').style.display = 'flex';
+  //   document.querySelectorAll('#joinScreen button').forEach(b => b.disabled = false);
+  // } else {
+  //   document.getElementById('joinScreen').style.display = 'none';
+  // }
+  if (!r) {
+    document.getElementById("suggestionBox").textContent = "Role already taken. Please choose another.";
+    document.querySelectorAll("#joinScreen button").forEach(b => b.disabled = false);
+    return;
+  }
+
+  role = r;
+  document.getElementById("suggestionBox").textContent = "";
+  document.getElementById("roleBox").textContent = `You are: ${role}`;
+  document.getElementById("joinScreen").style.display = "none";
 
   if (!board) {
     board = Chessboard('board', {
@@ -112,11 +120,11 @@ socket.on("game_state", fen => {
   document.getElementById("endBanner").style.display = "none";
   document.querySelectorAll(".highlight-square").forEach(el => el.classList.remove("highlight-square"));
 
-console.log("Turn:", game.turn()); // 'b' or 'w'
-console.log("In check:", game.in_check());
-console.log("Legal moves:", game.moves());
-console.log("Checkmate:", game.in_checkmate());
-
+  console.log("Turn:", game.turn()); // 'b' or 'w'
+  console.log("In check:", game.in_check());
+  console.log("Legal moves:", game.moves());
+  console.log("Checkmate:", game.in_checkmate());
+  
 
   if (game.in_checkmate()) {
     const winner = game.turn() === 'w' ? 'black' : 'white';
@@ -152,19 +160,40 @@ socket.on("invalid_move", data => {
 });
 
 socket.on("available_roles", roles => {
-  const whiteBtn = document.getElementById("whiteBtn");
-  const blackBtn = document.getElementById("blackBtn");
+  ['white', 'black', 'spectator'].forEach(role => {
+    const btn = document.querySelector(`button[data-role="${role}"]`);
+    if (btn) {
+      btn.disabled = !roles.includes(role);
+    }
+  });
+console.log("Available roles updated:", roles);
 
-  whiteBtn.disabled = !roles.includes("white");
-  blackBtn.disabled = !roles.includes("black");
+  // If join screen is visible, clear any rejection messages
+  if (document.getElementById("joinScreen").style.display !== "none") {
+    document.getElementById("suggestionBox").textContent = "";
+  }
 });
 
 socket.on("role_rejected", data => {
   document.getElementById("suggestionBox").textContent = data.reason;
+  document.querySelectorAll('#joinScreen button').forEach(b => b.disabled = false);
 });
 
 socket.on("reset_game", () => {
   game.reset();
+
+  // Show join UI again
+  document.getElementById("joinScreen").style.display = "flex";
+  document.getElementById("board").style.display      = "none";
+  document.getElementById("controls").style.display   = "none";
+
+  // Re‐enable all role buttons
+  document.querySelectorAll("#joinScreen button")
+          .forEach(b => b.disabled = false);
+
+  // Clear any messages
+  document.getElementById("suggestionBox").textContent = "";
+
   io.emit("game_state", game.fen());
 });
 
@@ -183,13 +212,13 @@ function getAISuggestion() {
     document.getElementById("suggestionBox").textContent = "Spectators can't request AI suggestions.";
     return; 
   }
+  console.log("AI suggestion clicked by non-spectator");
   fetch('/ai')
     .then(response => response.json())
     .then(data => {
       if (!data.move) return;
       const from = data.move.slice(0, 2);
       const to = data.move.slice(2, 4);
-
       setTimeout(() => {
         drawSuggestionArrow(from, to);
       }, 50);

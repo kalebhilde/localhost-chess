@@ -1,2 +1,19 @@
 *.pyc
 __pycahche__/
+
+
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Build output
+dist/
+build/
+out/
